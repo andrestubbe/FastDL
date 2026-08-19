@@ -54,9 +54,7 @@ public class Demo {
 ## Table of Contents
 
 - [Why FastDL?](#why-fastdl)
-- [FastML vs. FastDL](#fastml-vs-fastdl)
 - [Key Features](#key-features)
-- [Architecture & FastJava Ecosystem](#architecture--fastjava-ecosystem)
 - [API Quick Reference](#api-quick-reference)
 - [Installation](#installation)
 - [Technical Examples & Hero Demos](#technical-examples--hero-demos)
@@ -79,43 +77,12 @@ Standard Deep Learning frameworks in the Java ecosystem (like DL4J) suffer from 
 
 ---
 
-## FastML vs. FastDL
-
-| Property | FastML | FastDL |
-|---|---|---|
-| **Approach** | Classical ML (Centroids, KNN, Trees) | Deep Neural Networks (MLP, CNN, Autoencoders) |
-| **Feature Extraction** | Handcrafted / Extracted by Developer | Learned end-to-end by the Network |
-| **Data Representation** | `VectorPattern`, `RasterPattern` | Multidimensional `Tensor` with gradients |
-| **Optimization** | Direct Analytical / Nearest Distance | Backpropagation + Gradient Descent (`SGD`, `Adam`) |
-| **Primary Substrate** | CPU / FastMath | CPU / FastGPU acceleration |
-
----
-
 ## Key Features
 
 - **🧱 Dense & Multidimensional Tensors** — Zero-copy flat buffers, strides, automatic gradient tracking (`grad`).
 - **🧠 Neural Layers & Modular Sequentials** — `Dense`, `ReLU`, custom composable activation layers.
 - **⚡ Optimizers with Momentum** — Stochastic Gradient Descent with velocity momentum tracking.
 - **📉 Non-Convex Optimization & Loss Surfaces** — Built-in loss metrics (`MSELoss`) and minima exploration.
-
----
-
-## Architecture & FastJava Ecosystem
-
-```text
-                    FastAI (High-Level AI & Agents)
-                         │
-                   ┌─────┴─────────────┐
-                   ▼                   ▼
-             FastModel               FastDL (This Library)
-          (LLMs & Embeddings)      (Deep Learning & Tensors)
-                                       │
-                         ┌─────────────┼─────────────┐
-                         ▼             ▼             ▼
-                      Tensors       Layers      Optimizers
-                     (Strides,      (Dense,       (SGD,
-                      Grads)         ReLU)       Momentum)
-```
 
 ---
 
