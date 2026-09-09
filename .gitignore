@@ -5,3 +5,14 @@ target/
 .vscode/
 *.iml
 .DS_Store
+
+# Dataset files — too large for git (download separately from Hugging Face)
+data/*.txt
+data/*.parquet
+data/*.jsonl
+data/*.bin
+
+# Model checkpoints
+checkpoints/
+*.ckpt
+*.dat

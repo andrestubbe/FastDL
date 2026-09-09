@@ -4,7 +4,23 @@ import fastdl.tensor.Tensor;
 import java.util.List;
 
 /**
- * Stochastic Gradient Descent (SGD) with learning rate and momentum.
+ * Stochastic Gradient Descent with optional momentum.
+ *
+ * <p>SGD is the simplest parameter update rule for training neural networks. It updates
+ * each parameter by subtracting a scaled gradient, optionally smoothing the update with
+ * a momentum term to accelerate convergence on noisy loss landscapes.
+ *
+ * <h2>Update rule</h2>
+ * <pre>
+ *   v_t = momentum * v_{t-1} + lr * grad
+ *   θ_t = θ_{t-1} - v_t
+ * </pre>
+ *
+ * <h2>When to use it</h2>
+ * This implementation is useful for small experiments and as a baseline optimizer.
+ * For modern Transformers, AdamW is usually more stable and faster in practice.
+ *
+ * @see fastdl.optim.AdamW
  */
 public class SGD {
 

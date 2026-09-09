@@ -5,7 +5,21 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Rectified Linear Unit Activation (ReLU: max(0, x)).
+ * Rectified Linear Unit activation: {@code max(0, x)}.
+ *
+ * <p>ReLU is a simple nonlinear activation used in early MLP-style networks and in some
+ * classical neural-network baselines. It is computationally cheap and easy to reason about,
+ * but modern language models generally prefer GELU because it provides smoother gradients.
+ *
+ * <h2>Forward pass</h2>
+ * <pre>
+ *   out[i] = max(0, x[i])
+ * </pre>
+ *
+ * <h2>Backward pass</h2>
+ * The derivative is 1 for positive inputs and 0 for non-positive inputs.
+ *
+ * @see fastdl.layer.GELU
  */
 public class ReLU implements Layer {
 

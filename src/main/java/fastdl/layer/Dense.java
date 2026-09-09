@@ -4,7 +4,35 @@ import fastdl.tensor.Tensor;
 import java.util.List;
 
 /**
- * Fully Connected / Dense Layer (y = xW + b).
+ * Fully connected linear layer: {@code y = xW + b}.
+ *
+ * <p>Dense is the standard workhorse layer for MLP-style networks and the basis for
+ * many Transformer projections. It maps an input of shape {@code [batch, inFeatures]}
+ * or {@code [batch, seqLen, inFeatures]} into an output of shape
+ * {@code [batch, outFeatures]} or {@code [batch, seqLen, outFeatures]}.
+ *
+ * <h2>Forward pass</h2>
+ * <pre>
+ *   y[b, j] = Σ_i x[b, i] * W[i, j] + b[j]
+ * </pre>
+ *
+ * <h2>Backward pass</h2>
+ * Gradients are accumulated directly into the weight matrix and bias vector:
+ * <pre>
+ *   dW[i, j] += x[i] * dY[j]
+ *   db[j]    += dY[j]
+ *   dX[i]    += W[i, j] * dY[j]
+ * </pre>
+ *
+ * <h2>Usage</h2>
+ * <pre>{@code
+ * Dense fc = new Dense(128, 256);
+ * Tensor hidden = fc.forward(input); // [batch, 256]
+ * Tensor grad = fc.backward(gradOutput);
+ * }</pre>
+ *
+ * @see fastdl.model.FeedForward
+ * @see fastdl.model.MultiHeadAttention
  */
 public class Dense implements Layer {
 

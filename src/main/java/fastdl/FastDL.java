@@ -1,17 +1,47 @@
 package fastdl;
 
 import fastdl.layer.Dense;
+import fastdl.layer.GELU;
 import fastdl.layer.Layer;
+import fastdl.layer.LayerNorm;
 import fastdl.layer.ReLU;
+import fastdl.loss.CrossEntropyLoss;
 import fastdl.loss.MSELoss;
+import fastdl.model.GPTConfig;
+import fastdl.model.GPTModel;
+import fastdl.optim.AdamW;
 import fastdl.optim.SGD;
 import fastdl.tensor.Tensor;
+import fastdl.tokenizer.CharTokenizer;
+import fastdl.training.TrainerConfig;
 
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
- * FastDL — Deep Learning, Tensor Computing & Neural Backprop for Java.
+ * Public convenience facade for the FastDL library.
+ *
+ * <p>This class exposes the most common constructors and factory helpers used by the
+ * repo's examples, demos, and model code. Rather than requiring callers to instantiate
+ * every layer and optimizer manually, FastDL acts as a compact entry point for the core
+ * building blocks:
+ *
+ * <ul>
+ *   <li>tensor creation helpers</li>
+ *   <li>layer constructors such as {@link fastdl.layer.Dense} and {@link fastdl.layer.GELU}</li>
+ *   <li>loss functions and optimizers</li>
+ *   <li>small Transformer factory methods</li>
+ * </ul>
+ *
+ * <h2>Typical use</h2>
+ * <pre>{@code
+ * GPTConfig config = FastDL.gptConfigSmall(1024);
+ * GPTModel model = FastDL.gpt(config);
+ * }</pre>
+ *
+ * @see fastdl.model.GPTModel
+ * @see fastdl.training.Trainer
  */
 public final class FastDL {
 
@@ -93,4 +123,47 @@ public final class FastDL {
         for (Layer l : layers) seq.add(l);
         return seq;
     }
+
+    // -------------------------------------------------------------------------
+    // Transformer / LLM factory methods
+    // -------------------------------------------------------------------------
+
+    public static GELU gelu() { return new GELU(); }
+
+    public static LayerNorm layerNorm(int dModel) { return new LayerNorm(dModel); }
+
+    public static CrossEntropyLoss crossEntropy() { return new CrossEntropyLoss(); }
+
+    public static AdamW adamW(List<Tensor> params, float lr) {
+        return new AdamW(params, lr);
+    }
+
+    public static AdamW adamW(List<Tensor> params, float lr, float weightDecay) {
+        return new AdamW(params, lr, weightDecay);
+    }
+
+    public static GPTModel gpt(GPTConfig config) {
+        return new GPTModel(config);
+    }
+
+    public static GPTConfig gptConfigSmall(int vocabSize) {
+        return GPTConfig.small(vocabSize);
+    }
+
+    public static GPTConfig gptConfigMedium(int vocabSize) {
+        return GPTConfig.medium(vocabSize);
+    }
+
+    public static CharTokenizer charTokenizer(String corpus) {
+        return CharTokenizer.build(corpus);
+    }
+
+    public static TrainerConfig trainerConfigDemo() {
+        return TrainerConfig.demo();
+    }
+
+    public static TrainerConfig trainerConfigStandard() {
+        return TrainerConfig.standard();
+    }
 }
+

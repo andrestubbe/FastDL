@@ -4,7 +4,28 @@ import java.util.Arrays;
 import java.util.Random;
 
 /**
- * Multidimensional Tensor backing FastDL operations.
+ * Dense numeric container used throughout FastDL.
+ *
+ * <p>A tensor stores a flat {@code float[]} buffer together with a shape array and
+ * stride metadata, allowing multi-dimensional arrays to be indexed and traversed with
+ * a compact, allocation-friendly structure. The design is intentionally simple: FastDL
+ * uses tensors as the common data format for activations, parameters, and gradients.
+ *
+ * <h2>Shape conventions</h2>
+ * Most layers in FastDL follow standard ML conventions such as:
+ * <ul>
+ *   <li>{@code [batch, seqLen, dModel]}</li>
+ *   <li>{@code [batch, dModel]}</li>
+ *   <li>{@code [vocabSize, dModel]}</li>
+ * </ul>
+ *
+ * <h2>Gradient tracking</h2>
+ * Each tensor owns a parallel gradient buffer with the same number of elements as the
+ * main data buffer. During backward propagation, layers accumulate gradients into this
+ * buffer so that optimizers can update the parameters in-place.
+ *
+ * @see fastdl.ops.TensorOps
+ * @see fastdl.layer.Layer
  */
 public final class Tensor {
 
@@ -79,6 +100,12 @@ public final class Tensor {
 
     public static Tensor zeros(int... shape) {
         return new Tensor(shape);
+    }
+
+    public static Tensor ones(int... shape) {
+        Tensor t = new Tensor(shape);
+        java.util.Arrays.fill(t.data, 1f);
+        return t;
     }
 
     public static Tensor of(float... values) {

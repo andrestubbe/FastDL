@@ -6,19 +6,19 @@ if exist "C:\Users\andre\tools\apache-maven-3.9.9\bin\mvn.cmd" (
     set "PATH=%M2_HOME%\bin;%PATH%"
 )
 
-echo [FastDL] Installing project...
+echo [FastDL] Installing local FastDL dependency...
 call mvn clean install -DskipTests -q
 if errorlevel 1 (
-    echo [FastDL] Build failed.
+    echo [FastDL] Root build failed.
     pause
     exit /b %errorlevel%
 )
 
-echo [FastDL] Starting MLP demo...
-cd examples\Demo
-call mvn compile exec:java -Dexec.mainClass=fastdl.demo.MLPBoundaryDemo -q
+echo [FastDL] Starting TinyStories Transformer demo...
+cd examples\TinyStoriesDemo
+call mvn compile exec:java -Dexec.mainClass=fastdl.demo.TinyStoriesTransformerDemo -q
 if errorlevel 1 (
-    echo [FastDL] Demo failed.
+    echo [FastDL] TinyStories Transformer demo failed.
     pause
     exit /b %errorlevel%
 )
