@@ -142,12 +142,16 @@ dependencies {
 
 ## Technical Examples & Hero Demos
 
-- Non-Convex Loss Surface & Minima Valley — [examples/Demo/src/main/java/fastdl/demo/LossSurfaceDemo.java](examples/Demo/src/main/java/fastdl/demo/LossSurfaceDemo.java)
-- TinyStories Preview — [examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesMiniDemo.java](examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesMiniDemo.java)
-- TinyStories Transformer Demo — [examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesTransformerDemo.java](examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesTransformerDemo.java)
-- TinyStories Big-Data Runner — [run-tiny-big.bat](run-tiny-big.bat) and [examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesTransformerDemo.java](examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesTransformerDemo.java)
-- MLP Boundary Visualization — [examples/Demo/src/main/java/fastdl/demo/MLPBoundaryDemo.java](examples/Demo/src/main/java/fastdl/demo/MLPBoundaryDemo.java)
-- Autoencoder / Representation Learning — [examples/Demo/src/main/java/fastdl/demo/AutoencoderDemo.java](examples/Demo/src/main/java/fastdl/demo/AutoencoderDemo.java)
+| Case | Java Example | Launcher | Description |
+|---|---|---|---|
+| **TinyStories Quick Preview** | [TinyStoriesMiniDemo.java](examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesMiniDemo.java) | `run-tiny-quick.bat` | Fast smoke test for TinyStories-style local text training. |
+| **TinyStories Transformer Smoke** | [TinyStoriesTransformerDemo.java](examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesTransformerDemo.java) | `run-tiny-transformer.bat` | GPT-style mini transformer training run for quick validation. |
+| **TinyStories Big-Data Run** | [TinyStoriesTransformerDemo.java](examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesTransformerDemo.java) | `run-tiny-big.bat` | Longer dataset-driven run intended for realistic local TinyStories experiments. |
+| **Non-Convex Loss Surface** | [LossSurfaceDemo.java](examples/Demo/src/main/java/fastdl/demo/LossSurfaceDemo.java) | `run-demo.bat` | Gradient descent and minima exploration on a shaped loss surface. |
+| **MLP Boundary Visualization** | [MLPBoundaryDemo.java](examples/Demo/src/main/java/fastdl/demo/MLPBoundaryDemo.java) | `run-demo-mlp.bat` | Decision boundary demo for a small classification-style MLP. |
+| **Autoencoder / Representation Learning** | [AutoencoderDemo.java](examples/Demo/src/main/java/fastdl/demo/AutoencoderDemo.java) | `run-demo-autoencoder.bat` | Lower-dimensional feature-learning demo for reconstruction tasks. |
+
+---
 
 ### Root launchers
 
