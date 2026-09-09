@@ -34,16 +34,40 @@ public class TinyStoriesTransformerDemo {
     private static final String WARN   = "\u001B[38;5;221m";
     private static final String BAR    = "\u001B[38;5;240m";
 
-    // Demo limits — keep it fast on CPU
-    private static final int MAX_CHARS  = 200_000;  // ~200k chars from corpus
-    private static final int SEQ_LEN    = 64;
-    private static final int BATCH_SIZE = 2;
-    private static final int MAX_ITER   = 150;
-    private static final int EVAL_EVERY = 25;
-    private static final int GEN_TOKENS = 120;
+    private static final String MODE_SMOKE = "smoke";
+    private static final String MODE_BIG   = "big";
+
+    private static class DemoRunConfig {
+        final int maxChars;
+        final int seqLen;
+        final int batchSize;
+        final int maxIter;
+        final int evalEvery;
+        final int genTokens;
+        final int dModel;
+        final int numHeads;
+        final int numLayers;
+        final String label;
+
+        DemoRunConfig(int maxChars, int seqLen, int batchSize, int maxIter,
+                      int evalEvery, int genTokens, int dModel, int numHeads,
+                      int numLayers, String label) {
+            this.maxChars = maxChars;
+            this.seqLen = seqLen;
+            this.batchSize = batchSize;
+            this.maxIter = maxIter;
+            this.evalEvery = evalEvery;
+            this.genTokens = genTokens;
+            this.dModel = dModel;
+            this.numHeads = numHeads;
+            this.numLayers = numLayers;
+            this.label = label;
+        }
+    }
 
     public static void main(String[] args) throws Exception {
-        printHeader();
+        DemoRunConfig runConfig = resolveRunConfig(args);
+        printHeader(runConfig);
 
         // ---- 1. Locate dataset ----
         String dataPath = resolveDatasetPath();
@@ -57,7 +81,7 @@ public class TinyStoriesTransformerDemo {
 
         // ---- 2. Build tokenizer from corpus sample ----
         System.out.println(FG + "Building tokenizer..." + RESET);
-        String corpus = readSample(dataPath, MAX_CHARS);
+        String corpus = readSample(dataPath, runConfig.maxChars);
         CharTokenizer tokenizer = CharTokenizer.build(corpus);
         System.out.println(GOOD + "Tokenizer: " + RESET + tokenizer);
 
@@ -65,7 +89,7 @@ public class TinyStoriesTransformerDemo {
         System.out.println(FG + "Building dataset..." + RESET);
         TextDataset dataset;
         try {
-            dataset = new TextDataset(dataPath, SEQ_LEN, tokenizer, MAX_CHARS);
+            dataset = new TextDataset(dataPath, runConfig.seqLen, tokenizer, runConfig.maxChars);
         } catch (IOException e) {
             System.err.println("[ERROR] " + e.getMessage());
             return;
@@ -73,10 +97,10 @@ public class TinyStoriesTransformerDemo {
 
         // ---- 4. Build model ----
         GPTConfig config = new GPTConfig(
-            tokenizer.vocabSize(), SEQ_LEN,
-            /*dModel*/   128,
-            /*numHeads*/ 4,
-            /*numLayers*/4,
+            tokenizer.vocabSize(), runConfig.seqLen,
+            /*dModel*/   runConfig.dModel,
+            /*numHeads*/ runConfig.numHeads,
+            /*numLayers*/ runConfig.numLayers,
             /*dropout*/  0.0f
         );
         GPTModel model = new GPTModel(config);
@@ -88,15 +112,15 @@ public class TinyStoriesTransformerDemo {
 
         // ---- 6. Trainer ----
         TrainerConfig tConfig = new TrainerConfig(
-            BATCH_SIZE, MAX_ITER, EVAL_EVERY, 4,
+            runConfig.batchSize, runConfig.maxIter, runConfig.evalEvery, 4,
             3e-4f, 0.01f, 1.0f, null
         );
         Trainer trainer = new Trainer(model, dataset, optimizer, tConfig);
 
         System.out.println();
         System.out.println(BOLD + "Training" + RESET
-            + MUTED + "  " + MAX_ITER + " steps | batch=" + BATCH_SIZE
-            + " | seqLen=" + SEQ_LEN + RESET);
+            + MUTED + "  " + runConfig.maxIter + " steps | batch=" + runConfig.batchSize
+            + " | seqLen=" + runConfig.seqLen + RESET);
         System.out.println(BAR + "────────────────────────────────────────────────────" + RESET);
 
         long startMs = System.currentTimeMillis();
@@ -134,11 +158,11 @@ public class TinyStoriesTransformerDemo {
             System.out.println(MUTED + "Prompt  : " + RESET + prompt);
 
             // greedy
-            String greedy = generator.generate(prompt, GEN_TOKENS, 1.0f, 1);
+            String greedy = generator.generate(prompt, runConfig.genTokens, 1.0f, 1);
             System.out.println(ACCENT + "Greedy  : " + RESET + clip(greedy, 200));
 
             // temperature 0.8
-            String sampled = generator.generate(prompt, GEN_TOKENS, 0.8f, 40);
+            String sampled = generator.generate(prompt, runConfig.genTokens, 0.8f, 40);
             System.out.println(GOOD  + "Sampled : " + RESET + clip(sampled, 200));
 
             System.out.println();
@@ -147,10 +171,50 @@ public class TinyStoriesTransformerDemo {
 
     // -------------------------------------------------------------------------
 
-    private static void printHeader() {
+    private static DemoRunConfig resolveRunConfig(String[] args) {
+        String mode = MODE_SMOKE;
+        for (int i = 0; i < args.length; i++) {
+            String a = args[i].trim();
+            if (a.equals("--mode") && i + 1 < args.length) {
+                mode = args[i + 1].trim().toLowerCase();
+            } else if (a.startsWith("--mode=")) {
+                mode = a.substring(a.indexOf('=') + 1).trim().toLowerCase();
+            }
+        }
+
+        if (MODE_BIG.equals(mode)) {
+            return new DemoRunConfig(
+                1_000_000,
+                128,
+                4,
+                600,
+                50,
+                180,
+                256,
+                8,
+                6,
+                MODE_BIG
+            );
+        }
+
+        return new DemoRunConfig(
+            200_000,
+            64,
+            2,
+            150,
+            25,
+            120,
+            128,
+            4,
+            4,
+            MODE_SMOKE
+        );
+    }
+
+    private static void printHeader(DemoRunConfig runConfig) {
         System.out.println(FG + "════════════════════════════════════════════════════" + RESET);
         System.out.println(BOLD + " FastDL  —  TinyStories Transformer Demo" + RESET);
-        System.out.println(MUTED + " GPT-style causal language model trained from scratch" + RESET);
+        System.out.println(MUTED + " mode=" + runConfig.label + " | GPT-style causal language model trained from scratch" + RESET);
         System.out.println(FG + "════════════════════════════════════════════════════" + RESET);
         System.out.println();
     }
