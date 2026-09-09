@@ -74,15 +74,19 @@ Standard Deep Learning frameworks in the Java ecosystem (like DL4J) suffer from 
 - **100% Pure JVM Core with Optional Native SIMD/GPU Acceleration** — Instant startup, zero setup friction.
 - **Microsecond Tensor Operations** — Cache-friendly flat arrays with stride-based multidimensional indexing.
 - **Zero Framework Bloat** — Minimalist, PyTorch-like layer and optimizer APIs designed specifically for FastJava.
+- **Mini LLM / Transformer Foundations** — including attention, feedforward blocks, embeddings, causal generation, and training loops.
+- **TinyStories-Ready Workflow** — local datasets, tokenizer pipelines, and model training code built for small-language-model experimentation.
 
 ---
 
 ## Key Features
 
 - **🧱 Dense & Multidimensional Tensors** — Zero-copy flat buffers, strides, automatic gradient tracking (`grad`).
-- **🧠 Neural Layers & Modular Sequentials** — `Dense`, `ReLU`, custom composable activation layers.
-- **⚡ Optimizers with Momentum** — Stochastic Gradient Descent with velocity momentum tracking.
-- **📉 Non-Convex Optimization & Loss Surfaces** — Built-in loss metrics (`MSELoss`) and minima exploration.
+- **🧠 Neural Layers & Modular Sequentials** — `Dense`, `ReLU`, `LayerNorm`, `GELU`, and composable model blocks.
+- **⚡ Optimizers with Momentum** — Stochastic Gradient Descent and AdamW for transformer-style training.
+- **📉 Non-Convex Optimization & Loss Surfaces** — Built-in loss metrics (`MSELoss`, `CrossEntropyLoss`) and minima exploration.
+- **🤖 Mini Transformer / GPT-Style Stack** — token embeddings, positional encoding, causal attention, feedforward blocks, and text generation.
+- **📚 TinyStories Demo Path** — end-to-end local text-model demo workflow built around TinyStories-style corpora.
 
 ---
 
@@ -138,9 +142,26 @@ dependencies {
 
 ## Technical Examples & Hero Demos
 
-| Case | Java Example | Description |
-|---|---|---|
-| Non-Convex Loss Surface & Minima Valley | [LossSurfaceDemo.java](examples/Demo/src/main/java/fastdl/demo/LossSurfaceDemo.java) | Real-time interactive simulation of gradient descent and momentum balls escaping local minima |
+- Non-Convex Loss Surface & Minima Valley — [examples/Demo/src/main/java/fastdl/demo/LossSurfaceDemo.java](examples/Demo/src/main/java/fastdl/demo/LossSurfaceDemo.java)
+- TinyStories Preview — [examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesMiniDemo.java](examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesMiniDemo.java)
+- TinyStories Transformer Demo — [examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesTransformerDemo.java](examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesTransformerDemo.java)
+- TinyStories Big-Data Runner — [run-tiny-big.bat](run-tiny-big.bat) and [examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesTransformerDemo.java](examples/TinyStoriesDemo/src/main/java/fastdl/demo/TinyStoriesTransformerDemo.java)
+- MLP Boundary Visualization — [examples/Demo/src/main/java/fastdl/demo/MLPBoundaryDemo.java](examples/Demo/src/main/java/fastdl/demo/MLPBoundaryDemo.java)
+- Autoencoder / Representation Learning — [examples/Demo/src/main/java/fastdl/demo/AutoencoderDemo.java](examples/Demo/src/main/java/fastdl/demo/AutoencoderDemo.java)
+
+### Root launchers
+
+The repo also includes simple Windows batch launchers for the demo flow:
+
+- `run-demo.bat` — generic project demo entrypoint
+- `run-demo-autoencoder.bat` — autoencoder demo
+- `run-demo-mlp.bat` — MLP demo
+- `run-tiny-quick.bat` — Stage 1: TinyStories quick preview / smoke run
+- `run-tiny-transformer.bat` — Stage 2: TinyStories transformer smoke run
+- `run-tiny-big.bat` — Stage 3: long TinyStories big-data run
+- legacy aliases: `run-tiny.bat` and `run-tiny2.bat` delegate to the new stage launchers
+
+These launchers are designed to compile the root project, install the local artifact, and then execute the relevant example from the Java demo modules.
 
 ---
 
