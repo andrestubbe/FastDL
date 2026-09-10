@@ -12,24 +12,50 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Training loop for autoregressive GPT-style models.
+ * Training loop for autoregressive GPT-style language models.
  *
- * <p>The trainer coordinates the full optimization cycle:
- * 1. sample a batch from the dataset,
- * 2. compute logits with the model,
- * 3. compute the loss with {@link fastdl.loss.CrossEntropyLoss},
- * 4. zero gradients,
- * 5. backpropagate,
- * 6. clip and apply the optimizer step,
- * 7. optionally evaluate and save a checkpoint.
+ * <p>The {@code Trainer} orchestrates the full supervised optimization cycle for
+ * next-token prediction. It takes a {@link fastdl.model.GPTModel}, a
+ * {@link fastdl.data.TextDataset}, an {@link fastdl.optim.AdamW} optimizer, and a
+ * {@link TrainerConfig}, then runs the training loop for {@code config.maxIter} steps.
  *
- * <h2>Typical usage</h2>
+ * <h2>Per-step cycle</h2>
+ * <ol>
+ *   <li>Sample a random batch of {@code (inputs, targets)} from the dataset</li>
+ *   <li>Forward pass: {@code logits = model.forward(inputs)} — shape {@code [B*T, vocab]}</li>
+ *   <li>Loss: {@code loss = CrossEntropyLoss.forward(logits, flatTargets)}</li>
+ *   <li>Zero gradients: {@code optimizer.zeroGrad()}</li>
+ *   <li>Backward pass: {@code model.backwardPass(criterion.backward())}</li>
+ *   <li>Gradient clipping: clip global norm to {@code config.gradClip}</li>
+ *   <li>Optimizer step: {@code optimizer.step()}</li>
+ * </ol>
+ *
+ * <h2>Evaluation</h2>
+ * Every {@code config.evalInterval} steps the trainer calls {@link #evaluate()} which
+ * averages the cross-entropy loss over {@code config.evalBatches} random batches.
+ * The result is passed to the optional {@link #setOnStep(java.util.function.Consumer)}
+ * callback as a {@link StepInfo} record for progress display.
+ *
+ * <h2>Gradient clipping</h2>
+ * If {@code config.gradClip > 0}, the global L2 norm of all gradients is computed
+ * and all gradients are scaled down proportionally if the norm exceeds the threshold.
+ * This is the standard technique to prevent exploding gradients in deep Transformers.
+ *
+ * <h2>Checkpointing</h2>
+ * If {@code config.checkpointDir} is set, the model's parameter arrays are serialized
+ * to a binary {@code .dat} file after each evaluation. Checkpoints can be loaded back
+ * via {@link #loadCheckpoint(String)}.
+ *
+ * <h2>Usage</h2>
  * <pre>{@code
- * Trainer trainer = new Trainer(model, dataset, optimizer, config);
- * trainer.setOnStep(info -> System.out.println(info));
+ * Trainer trainer = new Trainer(model, dataset, optimizer, TrainerConfig.demo());
+ * trainer.setOnStep(info ->
+ *     System.out.printf("[%d/%d] train=%.4f eval=%.4f%n",
+ *         info.step, info.totalSteps, info.trainLoss, info.evalLoss));
  * trainer.train();
  * }</pre>
  *
+ * @see TrainerConfig
  * @see fastdl.model.GPTModel
  * @see fastdl.data.TextDataset
  * @see fastdl.optim.AdamW

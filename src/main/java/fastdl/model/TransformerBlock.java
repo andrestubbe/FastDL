@@ -9,13 +9,57 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A single Transformer Block (Pre-LN variant).
+ * A single Transformer Block implementing the Pre-LayerNorm (Pre-LN) architecture.
  *
- * Structure (Pre-LayerNorm, more stable for small models):
- *   x = x + Attention(LayerNorm1(x))
- *   x = x + FeedForward(LayerNorm2(x))
+ * <p>Each Transformer block consists of two sub-layers, each with its own residual
+ * connection: a causal multi-head self-attention layer and a position-wise feed-forward
+ * network. This is the fundamental repeating unit of GPT-style language models —
+ * stacking N of these blocks creates a model of depth N.
  *
- * Input/output shape: [batch, seqLen, dModel]
+ * <h2>Pre-LN vs Post-LN</h2>
+ * This implementation uses <strong>Pre-LayerNorm</strong> (normalize <em>before</em>
+ * the sub-layer), as opposed to the original "Attention Is All You Need" design which
+ * applies LayerNorm after the residual addition (Post-LN).
+ *
+ * <p>Pre-LN has been empirically shown to be more training-stable for small models and
+ * shorter training runs, because the residual path always carries the unnormalized signal
+ * directly to the next layer, preventing gradient vanishing in deep stacks.
+ *
+ * <h2>Computation graph (forward pass)</h2>
+ * <pre>
+ *   ┌── input ──────────────────────────────┐
+ *   │                                       │ (residual)
+ *   └→ LayerNorm₁ → Attention ─────────────┤ +
+ *                                           ↓
+ *   ┌── after_attn ─────────────────────────┐
+ *   │                                       │ (residual)
+ *   └→ LayerNorm₂ → FeedForward ───────────┤ +
+ *                                           ↓
+ *                                        output
+ * </pre>
+ *
+ * <h2>Backward pass</h2>
+ * Gradients flow through both branches of each residual connection. The identity
+ * shortcut ensures that gradients can flow unimpeded through arbitrarily many blocks,
+ * which is the key insight that makes deep Transformers trainable.
+ *
+ * <h2>Shape contract</h2>
+ * <ul>
+ *   <li>Input:  {@code Tensor [batch, seqLen, dModel]}</li>
+ *   <li>Output: {@code Tensor [batch, seqLen, dModel]}</li>
+ * </ul>
+ *
+ * <h2>Usage</h2>
+ * <pre>{@code
+ * TransformerBlock block = new TransformerBlock(dModel=128, numHeads=4);
+ * Tensor out  = block.forward(x);       // [B, T, 128]
+ * Tensor grad = block.backward(dOut);   // [B, T, 128]
+ * }</pre>
+ *
+ * @see fastdl.model.GPTModel
+ * @see fastdl.model.MultiHeadAttention
+ * @see fastdl.model.FeedForward
+ * @see fastdl.layer.LayerNorm
  */
 public class TransformerBlock implements Layer {
 

@@ -10,16 +10,68 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * GPT-style causal language model.
+ * GPT-style causal language model — the top-level model class.
  *
- * Architecture:
- *   TokenEmbedding + PositionalEncoding
- *   -> N x TransformerBlock
- *   -> LayerNorm
- *   -> Linear head [dModel -> vocabSize]   (logits)
+ * <p>Implements the complete autoregressive Transformer architecture used in GPT-2
+ * and similar models. Given a sequence of token IDs, the model predicts a probability
+ * distribution over the entire vocabulary for the next token at every position.
  *
- * forward(int[][] tokenIds) -> logits Tensor [batch * seqLen, vocabSize]
- * The flat output is used directly by CrossEntropyLoss.
+ * <h2>Full architecture (forward pass)</h2>
+ * <pre>
+ *   int[][] tokenIds  [B, T]
+ *         │
+ *         ├─ TokenEmbedding     [B, T] → [B, T, dModel]
+ *         ├─ PositionalEncoding [B, T, dModel] → [B, T, dModel]  (adds position)
+ *         │
+ *         ├─ TransformerBlock × numLayers
+ *         │     ├─ Pre-LN + CausalMultiHeadAttention + residual
+ *         │     └─ Pre-LN + FeedForward + residual
+ *         │
+ *         ├─ Final LayerNorm   [B, T, dModel]
+ *         └─ LM Head (Dense)  [B*T, dModel] → [B*T, vocabSize]   ← logits
+ * </pre>
+ *
+ * <h2>Output format</h2>
+ * The forward pass returns a flat {@code Tensor[B*T, vocabSize]} of raw unnormalized
+ * logits. This flat layout matches the input expected by {@link fastdl.loss.CrossEntropyLoss}
+ * without requiring an extra reshape in the training loop.
+ *
+ * <h2>Backward pass</h2>
+ * Call {@link #backwardPass(fastdl.tensor.Tensor)} with the gradient tensor returned by
+ * {@link fastdl.loss.CrossEntropyLoss#backward()}. The method propagates gradients
+ * backwards through all layers in reverse order and accumulates them into each
+ * parameter's {@code .grad()} array, ready for the optimizer.
+ *
+ * <h2>Parameter counting</h2>
+ * {@link #paramCount()} sums the sizes of all trainable tensors. For the default
+ * small config (dModel=128, 4 heads, 4 layers, seqLen=128, vocab≈102):
+ * <pre>
+ *   TokenEmbed:   102 × 128          =   13,056
+ *   PosEncode:    128 × 128          =   16,384
+ *   4 × Block:    4 × (4×128² + 8×128² + 2×128) ≈ 786,432
+ *   Final LN:     2 × 128            =      256
+ *   LM Head:      128 × 102 + 102    =   13,158
+ *   ─────────────────────────────────────────
+ *   Total:        ≈ 829,286 parameters
+ * </pre>
+ *
+ * <h2>Usage (minimal training loop)</h2>
+ * <pre>{@code
+ * GPTModel model    = new GPTModel(GPTConfig.small(tokenizer.vocabSize()));
+ * AdamW    optimizer = new AdamW(model.parameters(), 3e-4f);
+ * CrossEntropyLoss loss = new CrossEntropyLoss();
+ *
+ * Tensor logits = model.forward(batch.inputs);
+ * float  l      = loss.forward(logits, flatTargets);
+ * optimizer.zeroGrad();
+ * model.backwardPass(loss.backward());
+ * optimizer.step();
+ * }</pre>
+ *
+ * @see fastdl.model.GPTConfig
+ * @see fastdl.training.Trainer
+ * @see fastdl.generation.Generator
+ * @see fastdl.loss.CrossEntropyLoss
  */
 public class GPTModel implements Layer {
 

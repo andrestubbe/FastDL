@@ -47,7 +47,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>fastdl.demo.TinyStoriesMiniDemo</mainClass>
+                    <mainClass>fastdl.demo.TinyStoriesBigDemo</mainClass>
                 </configuration>
             </plugin>
         </plugins>

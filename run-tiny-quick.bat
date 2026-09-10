@@ -16,7 +16,14 @@ if errorlevel 1 (
 
 echo [FastDL] Starting TinyStories mini preview...
 cd examples\TinyStoriesDemo
-call mvn compile exec:java -Dexec.mainClass=fastdl.demo.TinyStoriesMiniDemo -q
+call mvn -q compile
+if errorlevel 1 (
+    echo [FastDL] TinyStories preview compile failed.
+    pause
+    exit /b %errorlevel%
+)
+
+java -cp "..\..\target\classes;target\classes" fastdl.demo.TinyStoriesMiniDemo
 if errorlevel 1 (
     echo [FastDL] TinyStories preview failed.
     pause

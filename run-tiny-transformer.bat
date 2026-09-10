@@ -16,7 +16,14 @@ if errorlevel 1 (
 
 echo [FastDL] Starting TinyStories transformer demo...
 cd examples\TinyStoriesDemo
-call mvn compile exec:java -Dexec.mainClass=fastdl.demo.TinyStoriesTransformerDemo -q
+call mvn -q compile
+if errorlevel 1 (
+    echo [FastDL] TinyStories transformer compile failed.
+    pause
+    exit /b %errorlevel%
+)
+
+java -cp "..\..\target\classes;target\classes" fastdl.demo.TinyStoriesTransformerDemo
 if errorlevel 1 (
     echo [FastDL] TinyStories transformer demo failed.
     pause

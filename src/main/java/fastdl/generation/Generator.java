@@ -10,26 +10,51 @@ import java.util.Random;
 /**
  * Autoregressive text generator for a trained {@link fastdl.model.GPTModel}.
  *
- * <p>Generation is performed by repeatedly feeding the current context into the model,
- * sampling the next token, and appending it to the sequence until the desired token
- * budget is reached or an EOS token is emitted. The generator supports both deterministic
- * greedy decoding and stochastic sampling with temperature and top-k filtering.
+ * <p>Text generation works by repeatedly running the model in inference mode:
+ * the current token sequence is fed into the model, the logits for the last position
+ * are extracted, a next token is sampled from them, the token is appended to the
+ * sequence, and the process repeats until {@code maxNewTokens} new tokens have been
+ * produced or an EOS token appears.
  *
- * <h2>Generation loop</h2>
+ * <h2>Context window management</h2>
+ * If the growing sequence exceeds {@code seqLen} (the model's maximum context length),
+ * only the most recent {@code seqLen} tokens are passed to the model. This matches
+ * the sliding window approach used in GPT-2 inference.
+ *
+ * <h2>Sampling strategies</h2>
+ * <ul>
+ *   <li><b>Greedy</b> ({@code topK=1}) — always picks the argmax token.
+ *       Deterministic but can produce repetitive text.</li>
+ *   <li><b>Temperature</b> ({@code topK=0, temperature≠1}) — divides all logits
+ *       by {@code temperature} before softmax. Lower temperature ({@code <1}) makes
+ *       the distribution sharper (more confident). Higher ({@code >1}) flattens it
+ *       (more random). Temperature = 1.0 is the unmodified model distribution.</li>
+ *   <li><b>Top-K</b> ({@code topK>1}) — keeps only the K highest-probability tokens,
+ *       sets the rest to {@code -∞}, then samples with temperature. This prevents
+ *       the model from ever sampling very unlikely tokens.</li>
+ * </ul>
+ *
+ * <h2>Recommended settings for TinyStories</h2>
+ * <ul>
+ *   <li>Creative: {@code temperature=0.8, topK=40}</li>
+ *   <li>Focused:  {@code temperature=0.5, topK=10}</li>
+ *   <li>Exact:    {@code topK=1} (greedy)</li>
+ * </ul>
+ *
+ * <h2>Usage</h2>
  * <pre>{@code
  * Generator gen = new Generator(model, tokenizer);
- * String text = gen.generate("Once upon a time", 64, 0.9f, 20);
- * }</pre>
  *
- * <h2>Sampling modes</h2>
- * <ul>
- *   <li>greedy — highest-probability next token</li>
- *   <li>temperature — softens or sharpens the distribution</li>
- *   <li>top-k — keeps only the strongest candidates</li>
- * </ul>
+ * // greedy
+ * String text1 = gen.generate("Once upon a time", 100);
+ *
+ * // temperature + top-k
+ * String text2 = gen.generate("Once upon a time", 100, 0.8f, 40);
+ * }</pre>
  *
  * @see fastdl.model.GPTModel
  * @see fastdl.tokenizer.Tokenizer
+ * @see fastdl.training.Trainer
  */
 public class Generator {
 

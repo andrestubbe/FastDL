@@ -18,7 +18,14 @@ if errorlevel 1 (
 
 echo [FastDL] Starting TinyStories big-data transformer demo...
 cd examples\TinyStoriesDemo
-call mvn compile exec:java -Dexec.mainClass=fastdl.demo.TinyStoriesTransformerDemo -Dexec.args="--mode big" -q
+call mvn -q compile
+if errorlevel 1 (
+    echo [FastDL] TinyStories big-data compile failed.
+    pause
+    exit /b %errorlevel%
+)
+
+java -cp "..\..\target\classes;target\classes" fastdl.demo.TinyStoriesBigDemo
 if errorlevel 1 (
     echo [FastDL] TinyStories big-data demo failed.
     pause
