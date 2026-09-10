@@ -184,6 +184,13 @@ public class GPTModel implements Layer {
 
     public GPTConfig config() { return config; }
 
+    // --- Inspection getters (used by WalkthroughDemo) ---
+    public Embedding      tokenEmbed() { return tokenEmbed; }
+    public PositionalEncoding posEncode() { return posEncode; }
+    public List<TransformerBlock> blocks() { return blocks; }
+    public LayerNorm      finalNorm()  { return finalNorm; }
+    public Dense          lmHead()     { return lmHead; }
+
     /** Count total trainable parameters. */
     public long paramCount() {
         long count = 0;
