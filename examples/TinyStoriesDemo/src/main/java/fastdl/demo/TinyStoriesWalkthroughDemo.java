@@ -1,4 +1,4 @@
-﻿package fastdl.demo;
+package fastdl.demo;
 
 import fastdl.layer.Dense;
 import fastdl.model.*;

@@ -74,15 +74,30 @@ public class TextDataset {
      * @param tokenizer tokenizer to use
      * @param maxChars  max characters to read (0 = unlimited)
      */
+    public static String readTextCapped(Path path, int maxChars) throws IOException {
+        if (maxChars <= 0) {
+            return Files.readString(path);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        try (var reader = Files.newBufferedReader(path)) {
+            char[] buffer = new char[8192];
+            int read;
+            while ((read = reader.read(buffer)) != -1 && sb.length() < maxChars) {
+                int remaining = maxChars - sb.length();
+                int toRead = Math.min(read, remaining);
+                sb.append(buffer, 0, toRead);
+            }
+        }
+        return sb.toString();
+    }
+
     public TextDataset(String path, int seqLen, Tokenizer tokenizer, int maxChars)
             throws IOException {
         this.seqLen = seqLen;
         this.rng = new Random(42);
 
-        String raw = Files.readString(Path.of(path));
-        if (maxChars > 0 && raw.length() > maxChars) {
-            raw = raw.substring(0, maxChars);
-        }
+        String raw = readTextCapped(Path.of(path), maxChars);
 
         this.tokens = tokenizer.encode(raw);
 

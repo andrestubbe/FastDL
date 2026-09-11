@@ -92,14 +92,31 @@ Standard Deep Learning frameworks in the Java ecosystem (like DL4J) suffer from 
 
 ## API Quick Reference
 
+### MLP / Core
+
 | Method | Description |
 |---|---|
 | `FastDL.tensor(shape...)` | Allocates a zero-initialized tensor. |
 | `FastDL.dense(in, out)` | Creates a fully-connected linear layer. |
 | `FastDL.relu()` | Rectified Linear Unit activation layer. |
+| `FastDL.gelu()` | GELU activation (used inside Transformer FFN blocks). |
+| `FastDL.layerNorm(dim)` | Pre-LayerNorm layer with learnable gamma/beta. |
 | `FastDL.sequential(layers...)` | Chains layers into an executable network container. |
 | `FastDL.sgd(params, lr, momentum)` | Creates an SGD optimizer with momentum. |
-| `FastDL.mse()` | Mean Squared Error loss calculator. |
+| `FastDL.adamW(params, lr)` | Creates an AdamW optimizer (standard for Transformers). |
+| `FastDL.mse()` | Mean Squared Error loss. |
+| `FastDL.crossEntropy()` | Cross-entropy loss for language modelling. |
+
+### Transformer / GPT
+
+| Method | Description |
+|---|---|
+| `FastDL.gptConfigSmall(vocabSize)` | GPT config: 128-dim, 4 heads, 4 layers, seqLen=128. |
+| `FastDL.gptConfigMedium(vocabSize)` | GPT config: 256-dim, 4 heads, 6 layers, seqLen=256. |
+| `FastDL.gpt(config)` | Creates a full causal GPT language model. |
+| `FastDL.charTokenizer(corpus)` | Builds a character-level tokenizer from a text corpus. |
+| `FastDL.trainerConfigDemo()` | Training config: 2 batch, 200 steps (runs in ~1 min on CPU). |
+| `FastDL.trainerConfigStandard()` | Training config: 4 batch, 2000 steps with checkpointing. |
 
 ---
 

@@ -14,6 +14,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <exec.mainClass>fastdl.demo.TinyStoriesWalkthroughDemo</exec.mainClass>
     </properties>
 
     <repositories>
@@ -40,6 +41,10 @@
                 <configuration>
                     <source>17</source>
                     <target>17</target>
+                    <compilerArgs>
+                        <arg>--add-modules</arg>
+                        <arg>jdk.incubator.vector</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
@@ -47,7 +52,11 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.1.0</version>
                 <configuration>
-                    <mainClass>fastdl.demo.TinyStoriesBigDemo</mainClass>
+                    <mainClass>${exec.mainClass}</mainClass>
+                    <jvmArgs>
+                        <jvmArg>--add-modules</jvmArg>
+                        <jvmArg>jdk.incubator.vector</jvmArg>
+                    </jvmArgs>
                 </configuration>
             </plugin>
         </plugins>

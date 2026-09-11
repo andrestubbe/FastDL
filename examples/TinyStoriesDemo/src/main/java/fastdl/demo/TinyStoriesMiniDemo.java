@@ -159,6 +159,8 @@ public class TinyStoriesMiniDemo {
 
     private static String resolveDatasetPath() {
         List<String> candidates = List.of(
+                "data/TinyStories-train.txt",
+                "data/tinystories-train.txt",
                 "data/tinystories.txt",
                 "data/TinyStories.txt",
                 "data/tinystories/train.txt",
@@ -185,19 +187,23 @@ public class TinyStoriesMiniDemo {
         return null;
     }
 
-    private static List<String> loadSample(String path, int limit) throws IOException {
-        List<String> all = Files.readAllLines(Path.of(path));
+    static List<String> readLinesCapped(Path path, int limit) throws IOException {
         List<String> selected = new ArrayList<>();
-        for (String line : all) {
-            if (line == null) continue;
-            String clean = line.strip();
-            if (clean.isEmpty()) continue;
-            selected.add(clean);
-            if (selected.size() >= limit) {
-                break;
+        try (var reader = Files.newBufferedReader(path)) {
+            String line;
+            while ((line = reader.readLine()) != null && selected.size() < limit) {
+                String clean = line.strip();
+                if (clean.isEmpty()) {
+                    continue;
+                }
+                selected.add(clean);
             }
         }
         return selected;
+    }
+
+    private static List<String> loadSample(String path, int limit) throws IOException {
+        return readLinesCapped(Path.of(path), limit);
     }
 
     private static final class SimpleTokenizer {

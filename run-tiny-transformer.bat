@@ -23,7 +23,7 @@ if errorlevel 1 (
     exit /b %errorlevel%
 )
 
-java -cp "..\..\target\classes;target\classes" fastdl.demo.TinyStoriesTransformerDemo
+java -cp "..\..\target\classes;target\classes" fastdl.demo.TinyStoriesTransformerDemo --mode medium
 if errorlevel 1 (
     echo [FastDL] TinyStories transformer demo failed.
     pause

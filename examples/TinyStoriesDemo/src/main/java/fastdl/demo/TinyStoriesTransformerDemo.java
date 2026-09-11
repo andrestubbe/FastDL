@@ -24,18 +24,19 @@ import java.util.List;
  */
 public class TinyStoriesTransformerDemo {
 
-    // ANSI palette (grau/weiss style — FastAIBot/FastAIRag pattern)
+    // ANSI palette (compact / readable terminal monitor)
     private static final String RESET  = "\u001B[0m";
     private static final String BOLD   = "\u001B[1m";
     private static final String FG     = "\u001B[38;5;252m";
     private static final String MUTED  = "\u001B[38;5;245m";
-    private static final String ACCENT = "\u001B[38;5;208m";
-    private static final String GOOD   = "\u001B[38;5;114m";
-    private static final String WARN   = "\u001B[38;5;221m";
+    private static final String ACCENT = "\u001B[38;5;214m";
+    private static final String GOOD   = "\u001B[38;5;119m";
+    private static final String WARN   = "\u001B[38;5;228m";
     private static final String BAR    = "\u001B[38;5;240m";
 
-    private static final String MODE_SMOKE = "smoke";
-    private static final String MODE_BIG   = "big";
+    private static final String MODE_SMOKE  = "smoke";
+    private static final String MODE_MEDIUM = "medium";
+    private static final String MODE_BIG    = "big";
 
     private static class DemoRunConfig {
         final int maxChars;
@@ -126,17 +127,117 @@ public class TinyStoriesTransformerDemo {
         long startMs = System.currentTimeMillis();
 
         trainer.setOnStep(info -> {
-            long elapsed = System.currentTimeMillis() - startMs;
+            long elapsedMs = System.currentTimeMillis() - startMs;
+            long elapsedSec = elapsedMs / 1000;
+            long hours = elapsedSec / 3600;
+            long minutes = (elapsedSec % 3600) / 60;
+            long seconds = elapsedSec % 60;
+            String elapsed = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+
+            long etaMs = info.step > 0
+                ? (long) ((elapsedMs / (double) info.step) * (info.totalSteps - info.step))
+                : 0L;
+            String eta = formatDuration(etaMs);
             String bar = progressBar(info.progressPct(), 20);
-            System.out.printf(ACCENT + "[%4d/%d]" + RESET
-                + " " + FG + "train=%.4f" + RESET
-                + "  " + WARN + "eval=%.4f" + RESET
-                + "  " + BAR + "%s" + RESET
-                + "  " + MUTED + "%ds" + RESET + "%n",
+
+            long tokensSeen = (long) info.step * (long) runConfig.batchSize * (long) runConfig.seqLen;
+            double tokensPerSec = elapsedMs > 0 ? (tokensSeen * 1000.0) / elapsedMs : 0.0;
+
+            String status = String.format(
+                ACCENT + "[%4d/%d]" + RESET
+                    + " " + FG + "train=%.4f" + RESET
+                    + "  " + WARN + "eval=%.4f" + RESET
+                    + "  " + BAR + "%s" + RESET
+                    + "  " + GOOD + "time=%s" + RESET
+                    + "  " + MUTED + "eta=%s" + RESET
+                    + "  " + FG + "tok=%,d" + RESET
+                    + "  " + ACCENT + "thr=%,.0f/s" + RESET,
                 info.step, info.totalSteps,
                 info.trainLoss, info.evalLoss,
                 bar,
-                elapsed / 1000);
+                elapsed,
+                eta,
+                tokensSeen,
+                tokensPerSec);
+
+            System.out.print("\u001B[2K\r" + status);
+
+            if (info.step > 0 && info.step % 50 == 0) {
+                String prompt = checkpointPrompt(corpus);
+                Generator previewGenerator = new Generator(model, tokenizer);
+                String preview = previewGenerator.generate(prompt, 12, 0.85f, 24);
+
+                System.out.print("\n" + MUTED + "checkpoint " + info.step
+                    + " | " + lossTrendLabel(info.trainLoss, info.evalLoss)
+                    + " | sample=" + clip(preview, 72)
+                    + RESET + "\n");
+            }
+
+            if (info.step == info.totalSteps) {
+                System.out.println();
+            }
+        });
+
+        final float[] bestTrainLoss = { Float.POSITIVE_INFINITY };
+        final float[] bestEvalLoss = { Float.POSITIVE_INFINITY };
+
+        trainer.setOnStep(info -> {
+            if (info.trainLoss < bestTrainLoss[0]) {
+                bestTrainLoss[0] = info.trainLoss;
+            }
+            if (info.evalLoss < bestEvalLoss[0]) {
+                bestEvalLoss[0] = info.evalLoss;
+            }
+
+            long elapsedMs = System.currentTimeMillis() - startMs;
+            long elapsedSec = elapsedMs / 1000;
+            long hours = elapsedSec / 3600;
+            long minutes = (elapsedSec % 3600) / 60;
+            long seconds = elapsedSec % 60;
+            String elapsed = String.format("%02d:%02d:%02d", hours, minutes, seconds);
+
+            long etaMs = info.step > 0
+                ? (long) ((elapsedMs / (double) info.step) * (info.totalSteps - info.step))
+                : 0L;
+            String eta = formatDuration(etaMs);
+            String bar = progressBar(info.progressPct(), 20);
+
+            long tokensSeen = (long) info.step * (long) runConfig.batchSize * (long) runConfig.seqLen;
+            double tokensPerSec = elapsedMs > 0 ? (tokensSeen * 1000.0) / elapsedMs : 0.0;
+
+            String status = String.format(
+                ACCENT + "[%4d/%d]" + RESET
+                    + " " + FG + "train=%.4f" + RESET
+                    + "  " + WARN + "eval=%.4f" + RESET
+                    + "  " + BAR + "%s" + RESET
+                    + "  " + GOOD + "time=%s" + RESET
+                    + "  " + MUTED + "eta=%s" + RESET
+                    + "  " + FG + "tok=%,d" + RESET
+                    + "  " + ACCENT + "thr=%,.0f/s" + RESET,
+                info.step, info.totalSteps,
+                info.trainLoss, info.evalLoss,
+                bar,
+                elapsed,
+                eta,
+                tokensSeen,
+                tokensPerSec);
+
+            System.out.print("\u001B[2K\r" + status);
+
+            if (info.step > 0 && info.step % 50 == 0) {
+                String prompt = checkpointPrompt(corpus);
+                Generator previewGenerator = new Generator(model, tokenizer);
+                String preview = previewGenerator.generate(prompt, 12, 0.85f, 24);
+
+                System.out.print("\n" + MUTED + "checkpoint " + info.step
+                    + " | " + lossTrendLabel(info.trainLoss, info.evalLoss)
+                    + " | sample=" + clip(preview, 72)
+                    + RESET + "\n");
+            }
+
+            if (info.step == info.totalSteps) {
+                System.out.println();
+            }
         });
 
         trainer.train();
@@ -145,26 +246,28 @@ public class TinyStoriesTransformerDemo {
         System.out.println(BAR + "────────────────────────────────────────────────────" + RESET);
         System.out.println(GOOD + "Training complete" + RESET
             + MUTED + "  " + (elapsed / 1000) + "s elapsed" + RESET);
+        System.out.println(BOLD + "Summary" + RESET);
+        System.out.println(MUTED + "best train loss=" + String.format("%.4f", bestTrainLoss[0]) + RESET);
+        System.out.println(MUTED + "best eval loss =" + String.format("%.4f", bestEvalLoss[0]) + RESET);
+        System.out.println(MUTED + "final tokens    =" + String.format("%,d", (long) runConfig.batchSize * (long) runConfig.seqLen * (long) runConfig.maxIter) + RESET);
 
         // ---- 7. Generation ----
         Generator generator = new Generator(model, tokenizer);
 
         System.out.println();
-        System.out.println(BOLD + "Generation" + RESET);
+        System.out.println(BOLD + "Generation preview" + RESET);
         System.out.println(BAR + "────────────────────────────────────────────────────" + RESET);
 
         String[] prompts = pickPrompts(corpus, 3);
-        for (String prompt : prompts) {
-            System.out.println(MUTED + "Prompt  : " + RESET + prompt);
+        for (int i = 0; i < prompts.length; i++) {
+            String prompt = prompts[i];
+            System.out.println(MUTED + "prompt " + (i + 1) + " -> " + RESET + prompt);
 
-            // greedy
             String greedy = generator.generate(prompt, runConfig.genTokens, 1.0f, 1);
-            System.out.println(ACCENT + "Greedy  : " + RESET + clip(greedy, 200));
-
-            // temperature 0.8
             String sampled = generator.generate(prompt, runConfig.genTokens, 0.8f, 40);
-            System.out.println(GOOD  + "Sampled : " + RESET + clip(sampled, 200));
 
+            System.out.println(ACCENT + "greedy  : " + RESET + clip(greedy, 180));
+            System.out.println(GOOD + "sampled : " + RESET + clip(sampled, 180));
             System.out.println();
         }
     }
@@ -194,6 +297,21 @@ public class TinyStoriesTransformerDemo {
                 8,
                 6,
                 MODE_BIG
+            );
+        }
+
+        if (MODE_MEDIUM.equals(mode)) {
+            return new DemoRunConfig(
+                600_000,
+                128,
+                4,
+                300,
+                25,
+                140,
+                192,
+                6,
+                6,
+                MODE_MEDIUM
             );
         }
 
@@ -241,9 +359,26 @@ public class TinyStoriesTransformerDemo {
         return null;
     }
 
+    static String readSampleCapped(Path path, int maxChars) throws IOException {
+        if (maxChars <= 0) {
+            return Files.readString(path);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        try (var reader = Files.newBufferedReader(path)) {
+            char[] buffer = new char[8192];
+            int read;
+            while ((read = reader.read(buffer)) != -1 && sb.length() < maxChars) {
+                int remaining = maxChars - sb.length();
+                int toRead = Math.min(read, remaining);
+                sb.append(buffer, 0, toRead);
+            }
+        }
+        return sb.toString();
+    }
+
     private static String readSample(String path, int maxChars) throws IOException {
-        String raw = Files.readString(Path.of(path));
-        return maxChars > 0 && raw.length() > maxChars ? raw.substring(0, maxChars) : raw;
+        return readSampleCapped(Path.of(path), maxChars);
     }
 
     private static String[] pickPrompts(String corpus, int count) {
@@ -262,12 +397,41 @@ public class TinyStoriesTransformerDemo {
         return out;
     }
 
+    private static String checkpointPrompt(String corpus) {
+        String[] sentences = corpus.split("[.!?]");
+        for (String sentence : sentences) {
+            String clean = sentence.strip();
+            if (clean.length() >= 8 && clean.length() <= 32) {
+                return clean.substring(0, Math.min(clean.length(), 18));
+            }
+        }
+        return "Once upon a time";
+    }
+
     private static String progressBar(float pct, int width) {
         int filled = (int) (pct / 100f * width);
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < width; i++) sb.append(i < filled ? '█' : '░');
         sb.append(']');
         return sb.toString();
+    }
+
+    private static String lossTrendLabel(float trainLoss, float evalLoss) {
+        if (trainLoss < 3.0f && evalLoss < 3.0f) {
+            return "improving";
+        }
+        if (trainLoss < 4.0f || evalLoss < 4.0f) {
+            return "stable";
+        }
+        return "warming";
+    }
+
+    private static String formatDuration(long durationMs) {
+        long sec = Math.max(0L, durationMs / 1000L);
+        long hours = sec / 3600L;
+        long minutes = (sec % 3600L) / 60L;
+        long seconds = sec % 60L;
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
     private static String clip(String s, int max) {
